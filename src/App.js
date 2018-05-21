@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import './floor.css';
-import Floor from './Floor'
+import './component/Floor.css';
+import Floor from './component/Floor'
 
 class App extends Component {
     render() {
