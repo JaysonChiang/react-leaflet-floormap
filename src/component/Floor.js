@@ -1,16 +1,18 @@
-import React, { Component } from 'react';
+import React, { Component } from 'react'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
-import { Map, ImageOverlay } from 'react-leaflet';
+import { Map, ImageOverlay, Marker, Popup } from 'react-leaflet'
+import Control from 'react-leaflet-control';
 import util from '../util/date.js'
 
+/* robinpowered */
 class Floor extends Component {
 
     customPin = L.divIcon({
         className: 'location-pin',
-        html: '<img src="https://static.robinpowered.com/roadshow/robin-avatar.png"><div class="pin"></div><div class="pulse"></div>',
-        iconSize: [30, 30],
-        iconAnchor: [18, 30]
+        html: '<img src="image/icon/camera.png"><div class="pin"></div><div class="pulse"></div>',
+        iconSize: [40, 40],
+        iconAnchor: [24, 40]
     });
 
     constructor(props) {
@@ -21,7 +23,19 @@ class Floor extends Component {
         this.state = {
             currentZoomLevel: 0,
             bounds: iniBounds,
-            markers: []
+            targetFloor: 'delta_f1',
+            floors: {
+                delta_f1: {
+                    name: 'F1',
+                    image: '1f.png',
+                    markers: []
+                },
+                delta_b1: {
+                    name: 'B1',
+                    image: 'b1.png',
+                    markers: []
+                }
+            }
         };
     }
 
@@ -35,6 +49,7 @@ class Floor extends Component {
 
         map.on('click', (e) => {
             this.handleAddMarker(e, map);
+            //this.handleChangeFloor();
         });
 
         const w = 1280 * 2,
@@ -56,45 +71,42 @@ class Floor extends Component {
         this.setState({ currentZoomLevel: newZoomLevel });
     }
 
+    handleChangeFloor(e) {
+        this.setState({ targetFloor: e.target.dataset.floor });
+    }
+
     handleAddMarker(e, map) {
         const cid = util.datetick();
-        var newMarker = new L.marker(e.latlng, {
-            icon: this.customPin,
-            draggable: true,
-            id: cid
-        }).addTo(map);
 
-        newMarker.bindPopup(`<b>LatLng</b><br>( Lat:${e.latlng.lat}, Lng:${e.latlng.lng} )`);
-
-        newMarker.on('dragend', function (e) {
-
-            let updatedMarkers = this.state.markers.map(m => {
-                if (e.target.options.id === m.id) {
-                    m.lat = e.target._latlng.lat
-                    m.lng = e.target._latlng.lng
-                }
-                return m;
-            })
-
-            // update Marker to state 
-            this.setState({ markers: updatedMarkers });
-
-        }.bind(this));
-
-        var myMarkder = {
+        var _marker = {
             id: cid,
             lat: e.latlng.lat,
             lng: e.latlng.lng
         }
 
         // add Marker to state
-        this.setState((prevState) => (
-            { markers: [...prevState.markers, myMarkder] }
-        ));
+        let _floors = Object.assign({}, this.state.floors);
+        _floors[this.state.targetFloor].markers = [..._floors[this.state.targetFloor].markers, _marker];
+
+        this.setState({
+            floors: _floors
+        })
     }
 
-    updateMarker() {
+    updateMarkerPosition(e) {
 
+        const { lat, lng } = e.target.getLatLng()
+
+        let updatedMarkers = this.state.floors[this.state.targetFloor].markers.map(m => {
+            if (m.id === e.target.options.id) {
+                m.lat = lat
+                m.lng = lng
+            }
+            return m;
+        })
+
+        // update Marker to state 
+        this.setState({ markers: updatedMarkers });
     }
 
     render() {
@@ -112,13 +124,38 @@ class Floor extends Component {
                     crs={L.CRS.Simple}
                     attributionControl={false}
                 >
+
                     <ImageOverlay
-                        url='https://dl.dropbox.com/s/yhrpnftsuis15z6/Topkapi_Palace_plan.svg'
-                        bounds={this.state.bounds} />
+                        url={`image/floormap/${this.state.floors[this.state.targetFloor].image}`}
+                        bounds={this.state.bounds} >
+
+                        {this.state.floors[this.state.targetFloor].markers.map(m =>
+                            <Marker
+                                key={m.id}
+                                id={m.id}
+                                draggable={true}
+                                onDragend={this.updateMarkerPosition.bind(this)}
+                                position={[m.lat, m.lng]}
+                                icon={this.customPin}>
+                                <Popup minWidth={90}>
+                                    <span> Lat:{m.lat}, Lng:{m.lng} </span>
+                                </Popup>
+                            </Marker>
+
+                        )}
+
+                    </ImageOverlay>
+
+                    <Control position="topright">
+                        <div style={{ backgroundColor: 'black', padding: '5px', }}>
+                            <button onClick={this.handleChangeFloor.bind(this)} data-floor="delta_f1">F1</button>
+                            <button onClick={this.handleChangeFloor.bind(this)} data-floor="delta_b1">B1</button>
+                        </div>
+                    </Control>
 
                 </Map>
                 <ol>
-                    {this.state.markers.map(m => (
+                    {this.state.floors[this.state.targetFloor].markers.map(m => (
                         <li key={m.id}>{`[${m.id}] (${m.lat},${m.lng})`}</li>
                     ))}
                 </ol>
@@ -126,5 +163,6 @@ class Floor extends Component {
         );
     }
 }
+
 
 export default Floor;
