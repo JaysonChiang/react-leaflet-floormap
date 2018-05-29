@@ -4,13 +4,16 @@ import L from 'leaflet'
 import { Map, ImageOverlay, Marker, Popup } from 'react-leaflet'
 import Control from 'react-leaflet-control';
 import util from '../util/date.js'
+import camera from '../image/icon/camera.png'
+import f1 from '../image/floormap/1f.png'
+import b1 from '../image/floormap/b1.png'
 
 /* robinpowered */
 class Floor extends Component {
 
     customPin = L.divIcon({
         className: 'location-pin',
-        html: '<img src="image/icon/camera.png"><div class="pin"></div><div class="pulse"></div>',
+        html: `<img src=${camera}><div class="pin"></div><div class="pulse"></div>`,
         iconSize: [40, 40],
         iconAnchor: [24, 40]
     });
@@ -27,12 +30,12 @@ class Floor extends Component {
             floors: {
                 delta_f1: {
                     name: 'F1',
-                    image: '1f.png',
+                    image: f1,
                     markers: []
                 },
                 delta_b1: {
                     name: 'B1',
-                    image: 'b1.png',
+                    image: b1,
                     markers: []
                 }
             }
@@ -126,7 +129,7 @@ class Floor extends Component {
                 >
 
                     <ImageOverlay
-                        url={`image/floormap/${this.state.floors[this.state.targetFloor].image}`}
+                        url={this.state.floors[this.state.targetFloor].image}
                         bounds={this.state.bounds} >
 
                         {this.state.floors[this.state.targetFloor].markers.map(m =>
